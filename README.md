@@ -1,74 +1,30 @@
 # AITrafficCounters - AI services
-Installation
-1. Installing on the host machine
-Step1. Install ByteTrack.
+Installation:
+Installing on the host machine
 
-git clone https://github.com/ifzhang/ByteTrack.git
-cd ByteTrack
-pip3 install -r requirements.txt
-python3 setup.py develop
-Step2. Install pycocotools.
+Step 1: Install Ultralytics.
 
-pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
-Step3. Others
+Step 2: Clone the repository.
 
-pip3 install cython_bbox
-
-step4. Install ultralytics
-!pip install ultralytics
-
-from IPython import display
-display.clear_output()
-
-import ultralytics
-ultralytics.checks()
-
-step5. Import BYTETracker and STrack and set a parameter.
-from yolox.tracker.byte_tracker import BYTETracker, STrack
-from onemetric.cv.utils.iou import box_iou_batch
-from dataclasses import dataclass
+!git clone https://github.com/MuhammadMoinFaisal/YOLOv8-DeepSORT-Object-Tracking.git
 
 
-@dataclass(frozen=True)
-class BYTETrackerArgs:
-    track_thresh: float = 0.25
-    track_buffer: int = 30
-    match_thresh: float = 0.8
-    aspect_ratio_thresh: float = 3.0
-    min_box_area: float = 1.0
-    mot20: bool = False
+Step 3: Install the required packages using the command below.
 
-step6.Install supervision 
-!pip install supervision==0.1.0
+Step 4: Set the path to install DeepSORT.
 
-from IPython import display
-display.clear_output()
+cd /YOLOv8-DeepSORT-Object-Tracking/ultralytics/yolo/v8/detect
 
-import supervision
-print("supervision.__version__:", supervision.__version__)
+Step 5: Download DeepSORT for tracking detected vehicles.
 
-step7.Import supervision libraries for vehicle color segmentation ,vehicle pointing, generating video frames after detection sink a frames to video
-%%capture
-from supervision.draw.color import ColorPalette
-from supervision.draw.color import Color
-from supervision.geometry.dataclasses import Point
-from supervision.video.dataclasses import VideoInfo
-from supervision.video.source import get_video_frames_generator
-from supervision.video.sink import VideoSink
-from supervision.notebook.utils import show_frame_in_notebook
+!gdown "https://drive.google.com/uc?id=11ZSZcG-bcbueXZC3rN08CM0qqX3eiHxf&confirm=t"
 
-step8.After Installing and import all the required libraries
-Download the model.
+Step 6: Unzip the downloaded file.
 
-MODEL = "yolov8x.pt"
+!unzip 'deep_sort_pytorch.zip'
 
-from ultralytics import YOLO
 
-model = YOLO(MODEL)
-model.fuse()
+Step 7: Run the script using the command below. Before doing so, replace the "predict.py" file with the updated "predict.py" 
+and change the video path. If you want to see live detection, set "show" to True.
 
-Step9.Then Run the vehicle detection and box annotation cell.
-
-step10.Resize a frame for fit to our model.
-
-step11.Run the main script to label all detection on frames and save output progress in CSV format.
+!python predict.py model=yolov8l.pt source="resized_video.mp4" show=True
