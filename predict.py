@@ -13,6 +13,8 @@ from deep_sort_pytorch.deep_sort import DeepSort
 from collections import deque
 import numpy as np
 import csv
+import pandas as pd
+from datetime import datetime
 
 data_deque = {}
 
@@ -28,7 +30,7 @@ vehicle_counts = {'car': 0, 'truck': 0, 'bus': 0, 'person': 0, 'motorcycle': 0, 
 # Create a CSV file for output
 csv_file = open('output_1.csv', 'w', newline='')  # Open a CSV file in write mode
 csv_writer = csv.writer(csv_file)  # Create a CSV writer object
-csv_writer.writerow(['Class', 'ID', 'Orientation', 'speed'])  # Write the header row to the CSV file
+csv_writer.writerow(['Class', 'ID', 'Orientation', 'speed','time'])  # Write the header row to the CSV file
 
 
 def estimatespeed(Location1, Location2):
@@ -37,7 +39,7 @@ def estimatespeed(Location1, Location2):
     # defining thr pixels per meter
     ppm = 8
     d_meters = d_pixel / ppm
-    time_constant = 15 * 1.0
+    time_constant = 15 * 4.6
     # distance = speed/time
     speed = d_meters * time_constant
 
@@ -198,7 +200,7 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
         font = cv2.FONT_HERSHEY_TRIPLEX
         font_scale = 1.5
         font_thickness = 2
-        font_color = (0, 0, 0)
+        font_color = (255,255,255)
         text_x = 20
         text_y = 40
         line_height = 45  # Adjust this value to control the vertical spacing
@@ -213,7 +215,8 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
         if len(data_deque[id]) >= 2:
             direction = get_direction(data_deque[id][0], data_deque[id][1])
             object_speed = estimatespeed(data_deque[id][1], data_deque[id][0])
-            csv_writer.writerow([obj_name, detection_id, direction, object_speed])
+            current_time = datetime.now()
+            csv_writer.writerow([obj_name, detection_id, direction, object_speed,current_time])
             speed_line_queue[id].append(object_speed)
 
         try:
@@ -318,13 +321,11 @@ class DetectionPredictor(BasePredictor):
 @hydra.main(version_base=None, config_path=str(DEFAULT_CONFIG.parent), config_name=DEFAULT_CONFIG.name)
 def predict(cfg):
     init_tracker()
-    cfg.model = cfg.model or "yolov8x.pt"
+    cfg.model = cfg.model or "yolov8n.pt"
     cfg.imgsz = check_imgsz(cfg.imgsz, min_dim=2)  # check image size
     cfg.source = cfg.source if cfg.source is not None else ROOT / "assets"
     predictor = DetectionPredictor(cfg)
     predictor()
-    csv_file.close()
-
 
 
 if __name__ == "__main__":
