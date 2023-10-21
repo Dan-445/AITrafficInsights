@@ -30,76 +30,76 @@ def convert_time_format(time_str):
     return converted_time.strftime("%I:%M:%S %p")
 
 
-df = pd.read_excel("latest_video_detection.xlsx")
-print(df)
-df_person = df[df['Class'] == 'person']
-df = df[df['speed'] > 11]
-# df['time'] = pd.to_datetime(df['time'])
-df['Converted_Time'] = df['time'].apply(lambda x: x.strftime("%I:%M:%S %p"))
-df.sort_values(by='Converted_Time', inplace=True)
-all_car_ids = df['ID'].unique()
-all_list_data = []
+df_vehicle_detection = pd.read_excel("latest_video_detection.xlsx")
+df_person = df_vehicle_detection[df_vehicle_detection['Class'] == 'person']
+df_vehicle_detection = df_vehicle_detection[df_vehicle_detection['speed'] > 11]
+df_vehicle_detection['Converted_Time'] = df_vehicle_detection['time'].apply(lambda x: x.strftime("%I:%M:%S %p"))
+df_vehicle_detection.sort_values(by='Converted_Time', inplace=True)
+all_car_ids = df_vehicle_detection['ID'].unique()
+detection_tracking_list = []
 
 
 # Function to remove rows where the Orientation values are not repeated for the next two rows
-def remove_non_repeated_orientations(df):
-    df.reset_index(drop=True, inplace=True)
+def remove_non_repeated_orientations(df_car_tracking):
+    df_car_tracking.reset_index(drop=True, inplace=True)
     indices_to_drop = []
-    for i in range(len(df) - 4):
-        if not (df.iloc[i]["Orientation"] == df.iloc[i + 1]["Orientation"] and df.iloc[i + 1]["Orientation"] ==
-                df.iloc[i + 2]["Orientation"] and df.iloc[i + 1]["Orientation"] ==
-                df.iloc[i + 3]["Orientation"]):
-            indices_to_drop.extend([i])
-    for i in range(len(df) - 1, 1, -1):
-        if not (df.iloc[i]["Orientation"] == df.iloc[i - 1]["Orientation"] and df.iloc[i - 1]["Orientation"] ==
-                df.iloc[i - 2]["Orientation"] and df.iloc[i - 1]["Orientation"] ==
-                df.iloc[i - 3]["Orientation"]):
-            indices_to_drop.extend([i])
-    df_cleaned = df.drop(indices_to_drop, axis=0)
+    for row in range(len(df_car_tracking) - 4):
+        if not (df_car_tracking.iloc[row]["Orientation"] == df_car_tracking.iloc[row + 1]["Orientation"] and
+                df_car_tracking.iloc[row + 1]["Orientation"] ==
+                df_car_tracking.iloc[row + 2]["Orientation"] and df_car_tracking.iloc[row + 1]["Orientation"] ==
+                df_car_tracking.iloc[row + 3]["Orientation"]):
+            indices_to_drop.extend([row])
+    for row in range(len(df_car_tracking) - 1, 1, -1):
+        if not (df_car_tracking.iloc[row]["Orientation"] == df_car_tracking.iloc[row - 1]["Orientation"] and
+                df_car_tracking.iloc[row - 1]["Orientation"] ==
+                df_car_tracking.iloc[row - 2]["Orientation"] and df_car_tracking.iloc[row - 1]["Orientation"] ==
+                df_car_tracking.iloc[row - 3]["Orientation"]):
+            indices_to_drop.extend([row])
+    df_cleaned = df_car_tracking.drop(indices_to_drop, axis=0)
     return df_cleaned
 
 
 for car_id in all_car_ids:
-    all_output = {}
-    id_data = df[df['ID'] == car_id]
-    id_data = remove_non_repeated_orientations(id_data)
-    if not id_data.empty and len(id_data) > 3:
-        all_output['Car_id'] = id_data['ID'].values[0]
-        all_output['detected_Class'] = id_data['Class'].values[0]
-        start_time = id_data['Converted_Time'].values[0]
-        all_output['start_time'] = start_time
-        start_orientation = id_data['Orientation'].tolist()[0]
-        end_orientation = id_data['Orientation'].tolist()[-1]
+    vehicle_tracking_output = {}
+    vehicle_tracking_dataset = df_vehicle_detection[df_vehicle_detection['ID'] == car_id]
+    vehicle_tracking_dataset = remove_non_repeated_orientations(vehicle_tracking_dataset)
+    if not vehicle_tracking_dataset.empty and len(vehicle_tracking_dataset) > 3:
+        vehicle_tracking_output['Car_id'] = vehicle_tracking_dataset['ID'].values[0]
+        vehicle_tracking_output['detected_Class'] = vehicle_tracking_dataset['Class'].values[0]
+        start_time = vehicle_tracking_dataset['Converted_Time'].values[0]
+        vehicle_tracking_output['start_time'] = start_time
+        start_orientation = vehicle_tracking_dataset['Orientation'].tolist()[0]
+        end_orientation = vehicle_tracking_dataset['Orientation'].tolist()[-1]
         orientation = direction_mapping.get((start_orientation, end_orientation), [start_orientation, end_orientation])
-        all_output['start_orientation'] = orientation[0]
-        all_output['end_orientation'] = orientation[1]
-        all_list_data.append(all_output)
-
+        vehicle_tracking_output['start_orientation'] = orientation[0]
+        vehicle_tracking_output['end_orientation'] = orientation[1]
+        detection_tracking_list.append(vehicle_tracking_output)
 
 # df_person['time'] = pd.to_datetime(df_person['time'])
-df_person['Converted_Time'] = df_person['time'].apply(lambda x: x.strftime("%I:%M:%S %p"))
+df_person['Converted_Time'] = df_person['time'].apply(lambda time: time.strftime("%I:%M:%S %p"))
 df_person.sort_values(by='Converted_Time', inplace=True)
-all_person_ids = df_person['ID'].unique()
+detected_person_ids = df_person['ID'].unique()
 
-for person_id in all_person_ids:
-        id_data = df_person[df_person['ID'] == person_id]
-        id_data = remove_non_repeated_orientations(id_data)
-        if not id_data.empty and len(id_data) > 2:
-            all_output['Car_id'] = id_data['ID'].values[0]
-            all_output['detected_Class'] = id_data['Class'].values[0]
-            start_time = id_data['Converted_Time'].values[0]
-            all_output['start_time'] = start_time
-            start_orientation = id_data['Orientation'].tolist()[0]
-            end_orientation = id_data['Orientation'].tolist()[-1]
-            orientation = direction_mapping.get((start_orientation, end_orientation),
-                                                [start_orientation, end_orientation])
-            all_output['start_orientation'] = orientation[0]
-            all_output['end_orientation'] = 'peds'
-            all_list_data.append(all_output)
+for person_id in detected_person_ids:
+    person_tracking_output = {}
+    person_tracking_dataset = df_person[df_person['ID'] == person_id]
+    person_tracking_dataset = remove_non_repeated_orientations(person_tracking_dataset)
+    if not person_tracking_dataset.empty and len(person_tracking_dataset) > 2:
+        person_tracking_output['Car_id'] = person_tracking_dataset['ID'].values[0]
+        person_tracking_output['detected_Class'] = person_tracking_dataset['Class'].values[0]
+        start_time = person_tracking_dataset['Converted_Time'].values[0]
+        person_tracking_output['start_time'] = start_time
+        start_orientation = person_tracking_dataset['Orientation'].tolist()[0]
+        end_orientation = person_tracking_dataset['Orientation'].tolist()[-1]
+        orientation = direction_mapping.get((start_orientation, end_orientation),
+                                            [start_orientation, end_orientation])
+        person_tracking_output['start_orientation'] = orientation[0]
+        person_tracking_output['end_orientation'] = 'peds'
+        detection_tracking_list.append(person_tracking_output)
 
-df_data = pd.DataFrame(all_list_data)
+direction_detected_dataset = pd.DataFrame(detection_tracking_list)
 
-pivot_table = pd.pivot_table(df_data, values='detected_Class', index=['start_time'],
+pivot_table = pd.pivot_table(direction_detected_dataset, values='detected_Class', index=['start_time'],
                              columns=['start_orientation', 'end_orientation'], aggfunc=lambda x: list(x), fill_value=0)
 all_columns = [('Southbound', 'right'), ('Southbound', 'thru'), ('Southbound', 'left'), ('Southbound', 'peds'),
                ('Southbound', 'U-turn'), ('Southbound', 'Vehicle Class'), ('Westbound', 'right'), ('Westbound', 'thru'),
@@ -127,8 +127,6 @@ for direction in ['Southbound', 'Westbound', 'Northbound', 'Eastbound']:
     df_data = pivot_table[direction]
     df_data = df_data.apply(map_class, axis=1)
     pivot_table[direction] = df_data
-
-
 
 # Create a new workbook
 workbook = Workbook()
@@ -162,11 +160,11 @@ for col, data in enumerate(header_data, start=1):
     additional_cell = worksheet.cell(8, col + 5, 'Additional')
     movement_cell = worksheet.cell(8, col + 6, 'Movement')
 
-    for c in [additional_cell, movement_cell]:
-        c.alignment = Alignment(horizontal='center', vertical='center')
-        c.fill = PatternFill(start_color="C0C0C0", end_color="C0C0C0", fill_type="solid")  # Gray color fill
-        c.border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'),
-                          bottom=Side(style='thin'))
+    for cell in [additional_cell, movement_cell]:
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.fill = PatternFill(start_color="C0C0C0", end_color="C0C0C0", fill_type="solid")  # Gray color fill
+        cell.border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'),
+                             bottom=Side(style='thin'))
 
 header_data = ['Right', 'Thru', 'Left', 'Peds', 'U-Turns', 'Vehicle Class'] * 4
 cell = worksheet.cell(9, 1, 'Start Time')
@@ -189,10 +187,10 @@ worksheet.row_dimensions[9].height = 30
 # Convert the pivot table to a list of lists
 pivot_values = pivot_table.reset_index().values.tolist()
 # Write the script and the pivot table to the same sheet
-for i, row in enumerate(pivot_values, start=1):
-    for j, value in enumerate(row, start=1):
-        worksheet.cell(row=i + len(content_data) + 2, column=j, value=value)
+for row_data, row in enumerate(pivot_values, start=1):
+    for column_data, value in enumerate(row, start=1):
+        worksheet.cell(row=row_data + len(content_data) + 2, column=column_data, value=value)
 
 # Save the workbook
 workbook.save('vehicle_counting_export.xlsx')
-print("Data, script, and pivot table have been written to the same Excel sheet successfully.")
+print("Pivot table have been written to the same Excel sheet successfully")
