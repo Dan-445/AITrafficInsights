@@ -43,17 +43,11 @@ detection_tracking_list = []
 def remove_non_repeated_orientations(df_car_tracking):
     df_car_tracking.reset_index(drop=True, inplace=True)
     indices_to_drop = []
-    for row in range(len(df_car_tracking) - 4):
-        if not (df_car_tracking.iloc[row]["Orientation"] == df_car_tracking.iloc[row + 1]["Orientation"] and
-                df_car_tracking.iloc[row + 1]["Orientation"] ==
-                df_car_tracking.iloc[row + 2]["Orientation"] and df_car_tracking.iloc[row + 1]["Orientation"] ==
-                df_car_tracking.iloc[row + 3]["Orientation"]):
+    for row in range(len(df_car_tracking) - 2):
+        if not (df_car_tracking.iloc[row]["Orientation"] == df_car_tracking.iloc[row + 1]["Orientation"]):
             indices_to_drop.extend([row])
     for row in range(len(df_car_tracking) - 1, 1, -1):
-        if not (df_car_tracking.iloc[row]["Orientation"] == df_car_tracking.iloc[row - 1]["Orientation"] and
-                df_car_tracking.iloc[row - 1]["Orientation"] ==
-                df_car_tracking.iloc[row - 2]["Orientation"] and df_car_tracking.iloc[row - 1]["Orientation"] ==
-                df_car_tracking.iloc[row - 3]["Orientation"]):
+        if not (df_car_tracking.iloc[row]["Orientation"] == df_car_tracking.iloc[row - 1]["Orientation"]):
             indices_to_drop.extend([row])
     df_cleaned = df_car_tracking.drop(indices_to_drop, axis=0)
     return df_cleaned
@@ -62,8 +56,8 @@ def remove_non_repeated_orientations(df_car_tracking):
 for car_id in all_car_ids:
     vehicle_tracking_output = {}
     vehicle_tracking_dataset = df_vehicle_detection[df_vehicle_detection['ID'] == car_id]
-    vehicle_tracking_dataset = remove_non_repeated_orientations(vehicle_tracking_dataset)
-    if not vehicle_tracking_dataset.empty and len(vehicle_tracking_dataset) > 3:
+    # vehicle_tracking_dataset = remove_non_repeated_orientations(vehicle_tracking_dataset)
+    if not vehicle_tracking_dataset.empty:
         vehicle_tracking_output['Car_id'] = vehicle_tracking_dataset['ID'].values[0]
         vehicle_tracking_output['detected_Class'] = vehicle_tracking_dataset['Class'].values[0]
         start_time = vehicle_tracking_dataset['Converted_Time'].values[0]
@@ -109,6 +103,9 @@ all_columns = [('Southbound', 'right'), ('Southbound', 'thru'), ('Southbound', '
                ('Eastbound', 'left'), ('Eastbound', 'peds'), ('Eastbound', 'U-turn'), ('Eastbound', 'Vehicle Class')]
 pivot_table = pivot_table.reindex(columns=all_columns, fill_value=0)
 pivot_table.columns.names = ["", ""]
+column_dict = {col: 0 for col in all_columns}
+new_row = pd.Series(column_dict, name='total_count')
+pivot_table = pd.concat([pivot_table, new_row.to_frame().T])
 
 
 def map_class(row):
@@ -124,8 +121,12 @@ def map_class(row):
 
 
 for direction in ['Southbound', 'Westbound', 'Northbound', 'Eastbound']:
+    direction_columns ={}
     df_data = pivot_table[direction]
     df_data = df_data.apply(map_class, axis=1)
+    for vehicle_direction in ['right', 'thru', 'left','peds', 'U-turn']:
+          direction_columns[vehicle_direction] = df_data[vehicle_direction].sum()
+    df_data.loc['total_count'] = direction_columns
     pivot_table[direction] = df_data
 
 # Create a new workbook
