@@ -1,25 +1,35 @@
+from typing import Dict, Any
+
 import pandas as pd
 from datetime import datetime, timedelta
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, PatternFill, Border, Side
 
+# import argparse
+
+# parser = argparse.ArgumentParser("file_data_path")
+# parser.add_argument("--file_data_path", type=str, help="file_data_path")
+# args = parser.parse_args()
+# file_path = args.file_data_path
+file_path = 'detected_vehicle_count.csv'
+
 direction_mapping = {
-    ('North', 'North'): ['Northbound', 'thru'],
+    ('north', 'north'): ['Northbound', 'thru'],
     ('south', 'south'): ['Southbound', 'thru'],
-    ('East', 'East'): ['Eastbound', 'thru'],
-    ('West', 'West'): ['Westbound', 'thru'],
-    ('south', 'West'): ['Southbound', 'left'],
-    ('North', 'south'): ['Northbound', 'U-turn'],
-    ('North', 'East'): ['Northbound', 'left'],
-    ('North', 'West'): ['Northbound', 'right'],
-    ('south', 'North'): ['Southbound', 'U-turn'],
-    ('south', 'East'): ['Southbound', 'right'],
-    ('East', 'North'): ['Eastbound', 'right'],
-    ('East', 'south'): ['Eastbound', 'left'],
-    ('East', 'West'): ['Eastbound', 'U-turn'],
-    ('West', 'North'): ['Westbound', 'left'],
-    ('West', 'south'): ['Westbound', 'right'],
-    ('West', 'East'): ['Westbound', 'U-turn']
+    ('east', 'east'): ['Eastbound', 'thru'],
+    ('west', 'west'): ['Westbound', 'thru'],
+    ('south', 'west'): ['Southbound', 'left'],
+    ('north', 'south'): ['Northbound', 'U-turn'],
+    ('north', 'east'): ['Northbound', 'left'],
+    ('north', 'west'): ['Northbound', 'right'],
+    ('south', 'north'): ['Southbound', 'U-turn'],
+    ('south', 'nast'): ['Southbound', 'right'],
+    ('east', 'north'): ['Eastbound', 'right'],
+    ('east', 'south'): ['Eastbound', 'left'],
+    ('east', 'west'): ['Eastbound', 'U-turn'],
+    ('west', 'north'): ['Westbound', 'left'],
+    ('west', 'south'): ['Westbound', 'right'],
+    ('west', 'east'): ['Westbound', 'U-turn']
 }
 
 
@@ -30,10 +40,9 @@ def convert_time_format(time_str):
     return converted_time.strftime("%I:%M:%S %p")
 
 
-df_vehicle_detection = pd.read_excel("latest_video_detection.xlsx")
-df_person = df_vehicle_detection[df_vehicle_detection['Class'] == 'person']
-df_vehicle_detection = df_vehicle_detection[df_vehicle_detection['speed'] > 11]
-df_vehicle_detection['Converted_Time'] = df_vehicle_detection['time'].apply(lambda x: x.strftime("%I:%M:%S %p"))
+df_vehicle_detection = pd.read_csv(file_path)
+df_vehicle_detection['Orientation'] = df_vehicle_detection['Orientation'].str.lower()
+df_vehicle_detection['Converted_Time'] = df_vehicle_detection['time']
 df_vehicle_detection.sort_values(by='Converted_Time', inplace=True)
 all_car_ids = df_vehicle_detection['ID'].unique()
 detection_tracking_list = []
@@ -56,10 +65,9 @@ def remove_non_repeated_orientations(df_car_tracking):
 for car_id in all_car_ids:
     vehicle_tracking_output = {}
     vehicle_tracking_dataset = df_vehicle_detection[df_vehicle_detection['ID'] == car_id]
-    # vehicle_tracking_dataset = remove_non_repeated_orientations(vehicle_tracking_dataset)
     if not vehicle_tracking_dataset.empty:
-        vehicle_tracking_output['Car_id'] = vehicle_tracking_dataset['ID'].values[0]
-        vehicle_tracking_output['detected_Class'] = vehicle_tracking_dataset['Class'].values[0]
+        vehicle_tracking_output['ID'] = vehicle_tracking_dataset['ID'].values[0]
+        vehicle_tracking_output['Class'] = vehicle_tracking_dataset['Class'].values[0]
         start_time = vehicle_tracking_dataset['Converted_Time'].values[0]
         vehicle_tracking_output['start_time'] = start_time
         start_orientation = vehicle_tracking_dataset['Orientation'].tolist()[0]
@@ -68,32 +76,9 @@ for car_id in all_car_ids:
         vehicle_tracking_output['start_orientation'] = orientation[0]
         vehicle_tracking_output['end_orientation'] = orientation[1]
         detection_tracking_list.append(vehicle_tracking_output)
-
-# df_person['time'] = pd.to_datetime(df_person['time'])
-df_person['Converted_Time'] = df_person['time'].apply(lambda time: time.strftime("%I:%M:%S %p"))
-df_person.sort_values(by='Converted_Time', inplace=True)
-detected_person_ids = df_person['ID'].unique()
-
-for person_id in detected_person_ids:
-    person_tracking_output = {}
-    person_tracking_dataset = df_person[df_person['ID'] == person_id]
-    person_tracking_dataset = remove_non_repeated_orientations(person_tracking_dataset)
-    if not person_tracking_dataset.empty and len(person_tracking_dataset) > 2:
-        person_tracking_output['Car_id'] = person_tracking_dataset['ID'].values[0]
-        person_tracking_output['detected_Class'] = person_tracking_dataset['Class'].values[0]
-        start_time = person_tracking_dataset['Converted_Time'].values[0]
-        person_tracking_output['start_time'] = start_time
-        start_orientation = person_tracking_dataset['Orientation'].tolist()[0]
-        end_orientation = person_tracking_dataset['Orientation'].tolist()[-1]
-        orientation = direction_mapping.get((start_orientation, end_orientation),
-                                            [start_orientation, end_orientation])
-        person_tracking_output['start_orientation'] = orientation[0]
-        person_tracking_output['end_orientation'] = 'peds'
-        detection_tracking_list.append(person_tracking_output)
-
 direction_detected_dataset = pd.DataFrame(detection_tracking_list)
 
-pivot_table = pd.pivot_table(direction_detected_dataset, values='detected_Class', index=['start_time'],
+pivot_table = pd.pivot_table(direction_detected_dataset, values='Class', index=['start_time'],
                              columns=['start_orientation', 'end_orientation'], aggfunc=lambda x: list(x), fill_value=0)
 all_columns = [('Southbound', 'right'), ('Southbound', 'thru'), ('Southbound', 'left'), ('Southbound', 'peds'),
                ('Southbound', 'U-turn'), ('Southbound', 'Vehicle Class'), ('Westbound', 'right'), ('Westbound', 'thru'),
@@ -121,11 +106,11 @@ def map_class(row):
 
 
 for direction in ['Southbound', 'Westbound', 'Northbound', 'Eastbound']:
-    direction_columns ={}
+    direction_columns: Dict[Any, Any] = {}
     df_data = pivot_table[direction]
     df_data = df_data.apply(map_class, axis=1)
-    for vehicle_direction in ['right', 'thru', 'left','peds', 'U-turn']:
-          direction_columns[vehicle_direction] = df_data[vehicle_direction].sum()
+    for vehicle_direction in ['right', 'thru', 'left', 'peds', 'U-turn']:
+        direction_columns[vehicle_direction] = df_data[vehicle_direction].sum()
     df_data.loc['total_count'] = direction_columns
     pivot_table[direction] = df_data
 
