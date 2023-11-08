@@ -5,13 +5,12 @@ from datetime import datetime, timedelta
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, PatternFill, Border, Side
 
-# import argparse
+import argparse
 
-# parser = argparse.ArgumentParser("file_data_path")
-# parser.add_argument("--file_data_path", type=str, help="file_data_path")
-# args = parser.parse_args()
-# file_path = args.file_data_path
-file_path = 'detected_vehicle_count.csv'
+parser = argparse.ArgumentParser("file_data_path")
+parser.add_argument("--file_data_path", type=str, help="file_data_path")
+args = parser.parse_args()
+file_path = args.file_data_path
 
 direction_mapping = {
     ('north', 'north'): ['Northbound', 'thru'],

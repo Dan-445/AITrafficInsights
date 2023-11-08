@@ -29,7 +29,7 @@ detected_vehicle_ids = set()
 vehicle_counts = {'vehicle_counts': 0}
 
 # Create a CSV file for output
-csv_file = open('detected_vechile_count.csv', 'w', newline='')  # Open a CSV file in write mode
+csv_file = open('detected_vehicle_count.csv', 'w', newline='')  # Open a CSV file in write mode
 csv_writer = csv.writer(csv_file)  # Create a CSV writer object
 csv_writer.writerow(['Class', 'ID', 'Orientation', 'speed','time'])  # Write the header row to the CSV file
 
