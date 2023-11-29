@@ -29,6 +29,8 @@ and change the video path. If you want to see live detection, set "show" to True
 
 !python predict.py model=yolov8l.pt source="resized_video.mp4" show=True # for pretrained model
 
+
+Make sure that your model and script must be in same folder
 For custom trained model
 !python predict.py model=best.pt source="resized_video.mp4" show=True
 
