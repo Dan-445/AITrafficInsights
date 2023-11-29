@@ -258,7 +258,7 @@ class DetectionPredictor(BasePredictor):
                                         agnostic=self.args.agnostic_nms,
                                         max_det=self.args.max_det)
 
-        vehicle_class_labels = [2, 5, 7, 3, 1]  # Labels for various vehicle classes
+        vehicle_class_labels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]  # Labels for various vehicle classes
         filtered_preds = []  # List to store filtered predictions
         vehicle_class_labels_tensor = torch.tensor(vehicle_class_labels).to(
             self.model.device)  # Move to the same device as the model
