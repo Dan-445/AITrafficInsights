@@ -1,8 +1,8 @@
 DEEPSORT:
   REID_CKPT: "deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7"
   MAX_DIST: 0.6
-  MIN_CONFIDENCE: 0.5
-  NMS_MAX_OVERLAP: 0.6
+  MIN_CONFIDENCE: 0.4
+  NMS_MAX_OVERLAP: 0.5
   MAX_IOU_DISTANCE: 0.6
   MAX_AGE: 7
   N_INIT: 5
