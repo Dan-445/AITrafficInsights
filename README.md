@@ -27,4 +27,8 @@ Step 6: Unzip the downloaded file.
 Step 7: Run the script using the command below. Before doing so, replace the "predict.py" file with the updated "predict.py" 
 and change the video path. If you want to see live detection, set "show" to True.
 
-!python predict.py model=yolov8l.pt source="resized_video.mp4" show=True
+!python predict.py model=yolov8l.pt source="resized_video.mp4" show=True # for pretrained model
+
+For custom trained model
+!python predict.py model=best.pt source="resized_video.mp4" show=True
+
