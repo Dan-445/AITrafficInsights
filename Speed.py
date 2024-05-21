@@ -25,7 +25,7 @@ video_writer = cv2.VideoWriter("/content/drive/MyDrive/nine3/one1four.mp4",
                                fps,
                                (w, h))
 
-# down line points for speed display
+# down line points 
 line_pts = [(300, 300), (700, 150)]
 line_pts2 = [(700, 150), (800, 100)]
 
