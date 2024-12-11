@@ -8,15 +8,10 @@ from datetime import datetime
 import copy
 import numpy as np
 
-# -------------------------------
-# Configuration Section
-# -------------------------------
 
-# Flag to enable/disable real-time visualization
-DISPLAY = True  # Set to False to disable display and improve performance
+DISPLAY = True 
 
-# Define the counting lines for all four directions and lanes
-# Each line is defined by two points (start and end)
+
 counting_lines = {
     "nb": {  # Northbound
         "incoming": [(215, 545), (590, 610)],  # Define accurately or set to [(0,0), (0,0)] if not used
@@ -44,11 +39,10 @@ counting_lines = {
     }
 }
 
-# Initialize the YOLO model with GPU support if available
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"Using device: {device}")
 
-model = YOLO("yolov8n.pt")  # Ensure 'yolov8n.pt' is in your working directory or provide the correct path
+model = YOLO("best.pt")  h
 model.to(device)
 
 # Define target classes and their colors
@@ -59,7 +53,6 @@ class_colors = {
     'bus': (0, 0, 255)        # Red
 }
 
-# Define colors for each direction's count box (BGR format)
 direction_colors = {
     "nb": (255, 0, 0),    # Blue
     "sb": (0, 198, 255),  # Yellow
@@ -76,8 +69,6 @@ target_class_indices = [i for i, name in enumerate(all_class_names) if name in t
 # Create a mapping from class index to class name for target classes
 target_class_mapping = {i: name for i, name in enumerate(all_class_names) if name in target_classes}
 
-# Initialize a dictionary to store counts
-# Structure: vehicle_data[direction][class] = {"incoming": count, "left": count, "thru": count, "right": count, "Total": count}
 vehicle_data = {
     direction: {
         cls: {
@@ -92,9 +83,6 @@ vehicle_data = {
 
 start_time = time.time()
 
-# -------------------------------
-# Helper Functions
-# -------------------------------
 
 def draw_label_with_background(frame, text, position, font, font_scale, font_thickness, text_color, bg_color):
     """
@@ -395,7 +383,6 @@ def process_video(video_path, output_path):
                                 # Debugging information
                                 print(f"Object ID {objectID} ({cls_name}) crossed {direction.upper()} {lane} lane. Total {lane}: {vehicle_data[direction][cls_name][lane]}")
 
-                                # Once counted in a lane, do not check other lanes
                                 break
                     # If already counted, no need to check other directions
                     if to["counted"]:
@@ -502,9 +489,6 @@ def process_video(video_path, output_path):
     video_writer.release()
     cv2.destroyAllWindows()
 
-# -------------------------------
-# Main Execution Section
-# -------------------------------
 
 # Directory containing the videos
 video_dir = "videos"  # Ensure this directory exists and contains your video files
